@@ -278,8 +278,11 @@ before "bam_tidy", 'EC2:start'
 
 task :run_macs, :roles => group_name do
 
-  treatment = "#{mount_point}/<TREATMENT FILE>"
-  control = "#{mount_point}/<CONTROL FILE>"
+  day_0_ip = "#{mount_point}/CME156_s_8_export_sorted_nodups.bam"
+  day_0_input = "#{mount_point}/CME155_s_5_export_sorted_nodups.bam"
+  day_4_ip = "#{mount_point}/CME158_s_5_export_sorted_nodups.bam"
+  day_4_input = "#{mount_point}/CME157_s_1_export_sorted_nodups.bam"
+
   genome = 'mm'
   bws = [300]
   pvalues = [0.00001]
@@ -288,21 +291,28 @@ task :run_macs, :roles => group_name do
   bws.each {|bw|
     pvalues.each { |pvalue|
 
-      dir = "#{mount_point}/macs_#{bw}_#{pvalue}"
+      dir = "#{mount_point}/macs_#{bw}_#{pvalue}_day_0"
       run "rm -Rf #{dir}"
       run "mkdir #{dir}"
 
-      macs_cmd =  "macs --treatment #{treatment} --control #{control} --name #{group_name} --format BAM --gsize #{genome} --bw #{bw} --pvalue #{pvalue}"
+      macs_cmd =  "macs --treatment #{day_0_ip} --control #{day_0_input} --name #{group_name} --format BAM --gsize #{genome} --bw #{bw} --pvalue #{pvalue}"
       run "cd #{dir} && #{macs_cmd}"
-      
-      dir = "#{mount_point}/macs_#{bw}_#{pvalue}_subpeaks"
+
+      dir = "#{mount_point}/macs_#{bw}_#{pvalue}_day_4"
       run "rm -Rf #{dir}"
       run "mkdir #{dir}"
+
+      macs_cmd =  "macs --treatment #{day_4_ip} --control #{day_4_input} --name #{group_name} --format BAM --gsize #{genome} --bw #{bw} --pvalue #{pvalue}"
+      run "cd #{dir} && #{macs_cmd}"
+      
+      #dir = "#{mount_point}/macs_#{bw}_#{pvalue}_subpeaks"
+      #run "rm -Rf #{dir}"
+      #run "mkdir #{dir}"
 
       # With SubPeak finding
       # this will take a lot longer as you have to save the wig file
-      macs_cmd =  "macs --treatment #{treatment} --control #{control} --name #{group_name} --format BAM --gsize #{genome} --call-subpeaks  --wig --bw #{bw} --pvalue #{pvalue}"
-      run "cd #{dir} && #{macs_cmd}"
+     # macs_cmd =  "macs --treatment #{treatment} --control #{control} --name #{group_name} --format BAM --gsize #{genome} --call-subpeaks  --wig --bw #{bw} --pvalue #{pvalue}"
+     # run "cd #{dir} && #{macs_cmd}"
 
     }
   }

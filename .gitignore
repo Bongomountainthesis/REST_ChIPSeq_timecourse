@@ -8,3 +8,5 @@ data/*
 *htaccess*
 *tar.gz
 *png
+new_data/data/*
+new_data/results/*
