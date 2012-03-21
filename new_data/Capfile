@@ -47,6 +47,7 @@ set :mount_point, '/mnt/data'
 
 #and mount your EBS
 #cap EBS:attach
+#cap EBS:format_xfs
 #cap EBS:mount_xfs
 
 #### Data uploading.
@@ -255,7 +256,9 @@ task :get_bam, :roles => group_name do
     download( "#{mount_point}/#{f}", "results/alignment/bowtie/#{f}")
   }
 end
-before "get_bam","EBS:snapshot","EC2:start"
+#before "get_bam","EBS:snapshot","EC2:start"
+
+before "get_bam","EC2:start","sort_bam","rmdups","index","flagstat","EBS:snapshot"
 
 
 
@@ -285,18 +288,28 @@ before "get_bam","EBS:snapshot","EC2:start"
 
 desc "run macs"
 task :run_macs, :roles => group_name do
-  ChIP = "#{mount_point}/REST_Astro.clean_sorted_nodups.bam"
-  Input = "#{mount_point}/input_Astro.clean_sorted_nodups.bam"
+  ChIP_D0 = "#{mount_point}/REST_CtrlES_D0.clean_sorted_nodups.bam"
+  Input_D0 = "#{mount_point}/input_CtrlES_D0.clean_sorted_nodups.bam"
   
+  ChIP_D4 = "#{mount_point}/REST_CtrlES_D4.clean_sorted_nodups.bam"
+  Input_D4 = "#{mount_point}/input_CtrlES_D4.clean_sorted_nodups.bam"
+
   genome = 'mm'
   bw = [300]
   
 
-      dir = "#{mount_point}/macs"
+      dir = "#{mount_point}/macs_D0"
       run "rm -Rf #{dir}"
       run "mkdir #{dir}"
 
-      macs_cmd =  "macs --treatment #{ChIP} --control #{Input} --name REST_NS5dAstro --format BAM --gsize #{genome}"
+      macs_cmd =  "macs --treatment #{ChIP_D0} --control #{Input_D0} --name REST_NS5dAstro --format BAM --gsize #{genome}"
+      run "cd #{dir} && #{macs_cmd}"
+
+      dir = "#{mount_point}/macs_D4"
+      run "rm -Rf #{dir}"
+      run "mkdir #{dir}"
+
+      macs_cmd =  "macs --treatment #{ChIP_D4} --control #{Input_D4} --name REST_NS5dAstro --format BAM --gsize #{genome}"
       run "cd #{dir} && #{macs_cmd}"
   
 end
